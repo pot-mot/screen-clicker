@@ -92,8 +92,7 @@ onUnmounted(() => {
 <template>
     <div class="container">
         <header class="header">
-            <h1>🎮 按键精灵</h1>
-            <p class="subtitle">录制和重放您的鼠标键盘操作</p>
+            <h1>按键精灵</h1>
         </header>
 
         <main class="main-content">
@@ -120,7 +119,7 @@ onUnmounted(() => {
         </main>
 
         <footer class="footer">
-            <p>💡 提示：录制时请最小化本窗口，重放时窗口会自动最小化</p>
+            <p>提示：录制时请最小化本窗口，重放时窗口会自动最小化</p>
         </footer>
     </div>
 </template>
@@ -128,26 +127,12 @@ onUnmounted(() => {
 <style scoped>
 .container {
     min-height: 100vh;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     padding: 20px;
 }
 
 .header {
     text-align: center;
-    color: white;
     margin-bottom: 30px;
-}
-
-.header h1 {
-    font-size: 2.5em;
-    margin: 0;
-    text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-}
-
-.subtitle {
-    margin: 10px 0 0 0;
-    font-size: 1.1em;
-    opacity: 0.9;
 }
 
 .main-content {
@@ -164,28 +149,16 @@ onUnmounted(() => {
     gap: 20px;
 }
 
-.right-panel {
-    min-height: 500px;
-}
-
 .footer {
     text-align: center;
-    color: white;
     margin-top: 30px;
     padding: 15px;
-    background: rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
     font-size: 0.9em;
 }
 
-/* 响应式设计 */
 @media (max-width: 900px) {
     .main-content {
         grid-template-columns: 1fr;
-    }
-
-    .right-panel {
-        min-height: auto;
     }
 }
 </style>

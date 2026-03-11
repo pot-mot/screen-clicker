@@ -1,43 +1,21 @@
 <script setup lang="ts">
-import { computed } from 'vue'
 import { EventType } from '@renderer/components/EventType'
 import { Action } from '@renderer/components/Action'
 
-const props = defineProps<{
+defineProps<{
     actions: Action[]
 }>()
-
-const getActionIcon = (action: Action): string => {
-    switch (action.type) {
-        case EventType.EVENT_MOUSE_PRESSED:
-            return '🖱️↓'
-        case EventType.EVENT_MOUSE_RELEASED:
-            return '🖱️↑'
-        case EventType.EVENT_MOUSE_MOVED:
-            return '➡️'
-        case EventType.EVENT_KEY_PRESSED:
-            return '⌨️↓'
-        case EventType.EVENT_KEY_RELEASED:
-            return '⌨️↑'
-        case EventType.EVENT_MOUSE_WHEEL:
-            return '🔄'
-        default:
-            return '❓'
-    }
-}
 
 const getActionDescription = (action: Action): string => {
     switch (action.type) {
         case EventType.EVENT_MOUSE_PRESSED:
-        case EventType.EVENT_MOUSE_RELEASED: {
+        case EventType.EVENT_MOUSE_RELEASED:
             return `点击`
-        }
         case EventType.EVENT_MOUSE_MOVED:
             return `移动到 (${action.x}, ${action.y})`
         case EventType.EVENT_KEY_PRESSED:
-        case EventType.EVENT_KEY_RELEASED: {
+        case EventType.EVENT_KEY_RELEASED:
             return `按键 ${action.keycode}`
-        }
         case EventType.EVENT_MOUSE_WHEEL:
             return `滚轮`
         default:
@@ -49,31 +27,22 @@ const formatTime = (ms: number): string => {
     const seconds = (ms / 1000).toFixed(2)
     return `${seconds}s`
 }
-
-const actionListClass = computed(() => {
-    return props.actions.length === 0 ? 'empty-list' : 'has-actions'
-})
 </script>
 
 <template>
     <div class="action-list-container">
         <h3 class="title">录制的动作 ({{ actions.length }})</h3>
 
-        <div class="list-wrapper" :class="actionListClass">
-            <div v-if="actions.length === 0" class="empty-message">
-                <div class="empty-icon">📝</div>
-                <p>暂无录制动作</p>
-                <p class="hint">开始录制后，您的操作将显示在这里</p>
-            </div>
+        <div v-if="actions.length === 0" class="empty-message">
+            <p>暂无录制动作</p>
+        </div>
 
-            <div v-else class="action-list">
-                <div v-for="(action, index) in actions" :key="index" class="action-item">
-                    <div class="action-index">{{ index + 1 }}</div>
-                    <div class="action-icon">{{ getActionIcon(action) }}</div>
-                    <div class="action-info">
-                        <div class="action-desc">{{ getActionDescription(action) }}</div>
-                        <div class="action-time">{{ formatTime(action.timestamp) }}</div>
-                    </div>
+        <div v-else class="action-list">
+            <div v-for="(action, index) in actions" :key="index" class="action-item">
+                <div class="action-index">{{ index + 1 }}</div>
+                <div class="action-info">
+                    <div class="action-desc">{{ getActionDescription(action) }}</div>
+                    <div class="action-time">{{ formatTime(action.timestamp) }}</div>
                 </div>
             </div>
         </div>
@@ -82,7 +51,6 @@ const actionListClass = computed(() => {
 
 <style scoped>
 .action-list-container {
-    background: white;
     border-radius: 12px;
     padding: 20px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
@@ -91,19 +59,6 @@ const actionListClass = computed(() => {
 .title {
     margin: 0 0 15px 0;
     font-size: 1.1em;
-    color: #333;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.list-wrapper {
-    max-height: 400px;
-    overflow-y: auto;
-}
-
-.empty-list {
-    max-height: none;
 }
 
 .empty-message {
@@ -112,24 +67,12 @@ const actionListClass = computed(() => {
     color: #999;
 }
 
-.empty-icon {
-    font-size: 3em;
-    margin-bottom: 10px;
-}
-
-.empty-message p {
-    margin: 5px 0;
-}
-
-.hint {
-    font-size: 0.9em;
-    color: #bbb;
-}
-
 .action-list {
     display: flex;
     flex-direction: column;
     gap: 8px;
+    max-height: 400px;
+    overflow-y: auto;
 }
 
 .action-item {
@@ -138,12 +81,6 @@ const actionListClass = computed(() => {
     padding: 10px;
     background: #f8f9fa;
     border-radius: 8px;
-    transition: all 0.2s ease;
-}
-
-.action-item:hover {
-    background: #e9ecef;
-    transform: translateX(4px);
 }
 
 .action-index {
@@ -160,34 +97,26 @@ const actionListClass = computed(() => {
     flex-shrink: 0;
 }
 
-.action-icon {
-    font-size: 1.5em;
-    margin: 0 12px;
-    flex-shrink: 0;
-}
-
 .action-info {
     flex: 1;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    margin-left: 12px;
 }
 
 .action-desc {
     font-weight: 500;
-    color: #333;
 }
 
 .action-time {
     font-family: 'Courier New', monospace;
     font-size: 0.85em;
-    color: #666;
     background: rgba(0, 0, 0, 0.05);
     padding: 4px 8px;
     border-radius: 4px;
 }
 
-/* 滚动条样式 */
 .action-list::-webkit-scrollbar {
     width: 6px;
 }
