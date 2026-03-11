@@ -6,6 +6,7 @@ import {
     type UiohookWheelEvent
 } from 'uiohook-napi'
 import { BrowserWindow, ipcMain } from 'electron'
+import robot from '@hurdlegroup/robotjs'
 
 // 动作类型定义
 export type Action = (UiohookKeyboardEvent | UiohookMouseEvent | UiohookWheelEvent) & {
@@ -200,34 +201,138 @@ class InputRecorder {
 
         switch (action.type) {
             case EventType.EVENT_KEY_PRESSED:
-                iohook.emit('keydown', action)
+                if (action.keycode !== undefined) {
+                    robot.keyToggle(this.getKeyName(action.keycode), 'down')
+                }
                 break
             case EventType.EVENT_KEY_RELEASED:
-                iohook.emit('keyup', action)
+                if (action.keycode !== undefined) {
+                    robot.keyToggle(this.getKeyName(action.keycode), 'up')
+                }
                 break
 
             case EventType.EVENT_MOUSE_PRESSED:
-                iohook.emit('mousedown', action)
+                if (action.x !== undefined && action.y !== undefined) {
+                    robot.moveMouse(action.x, action.y)
+                }
+                robot.mouseClick('left', false)
                 break
             case EventType.EVENT_MOUSE_RELEASED:
-                iohook.emit('mouseup', action)
+                robot.mouseClick('left', true)
                 break
 
             case EventType.EVENT_MOUSE_CLICKED:
-                iohook.emit('click', action)
+                if (action.x !== undefined && action.y !== undefined) {
+                    robot.moveMouse(action.x, action.y)
+                }
+                robot.mouseClick('left')
                 break
 
             case EventType.EVENT_MOUSE_MOVED:
-                iohook.emit('mousemove', action)
+                if (action.x !== undefined && action.y !== undefined) {
+                    robot.moveMouse(action.x, action.y)
+                }
                 break
 
             case EventType.EVENT_MOUSE_WHEEL:
-                iohook.emit('wheel', action)
+                if (action.direction !== undefined) {
+                    const scrollAmount = action.amount || 1
+                    if (action.rotation > 90 && action.rotation < 270) {
+                        robot.scrollMouse(0, -scrollAmount) // 向上滚动
+                    } else {
+                        robot.scrollMouse(0, scrollAmount) // 向下滚动
+                    }
+                }
                 break
 
             default:
                 console.warn(`未知事件 ${action}`)
         }
+    }
+
+    // 将 keycode 转换为 RobotJS 识别的键名
+    private getKeyName(keycode: number): string {
+        const keyMap: Record<number, string> = {
+            // 字母键
+            65: 'a',
+            66: 'b',
+            67: 'c',
+            68: 'd',
+            69: 'e',
+            70: 'f',
+            71: 'g',
+            72: 'h',
+            73: 'i',
+            74: 'j',
+            75: 'k',
+            76: 'l',
+            77: 'm',
+            78: 'n',
+            79: 'o',
+            80: 'p',
+            81: 'q',
+            82: 'r',
+            83: 's',
+            84: 't',
+            85: 'u',
+            86: 'v',
+            87: 'w',
+            88: 'x',
+            89: 'y',
+            90: 'z',
+            // 数字键
+            48: '0',
+            49: '1',
+            50: '2',
+            51: '3',
+            52: '4',
+            53: '5',
+            54: '6',
+            55: '7',
+            56: '8',
+            57: '9',
+            // 功能键
+            112: 'f1',
+            113: 'f2',
+            114: 'f3',
+            115: 'f4',
+            116: 'f5',
+            117: 'f6',
+            118: 'f7',
+            119: 'f8',
+            120: 'f9',
+            121: 'f10',
+            122: 'f11',
+            123: 'f12',
+            // 特殊键
+            8: 'backspace',
+            9: 'tab',
+            13: 'enter',
+            16: 'shift',
+            17: 'control',
+            18: 'alt',
+            20: 'caps_lock',
+            27: 'escape',
+            32: 'space',
+            37: 'left',
+            38: 'up',
+            39: 'right',
+            40: 'down',
+            46: 'delete',
+            91: 'command',
+            192: '`',
+            189: '-',
+            187: '=',
+            219: '[',
+            221: ']',
+            220: '\\',
+            186: ';',
+            222: "'",
+            188: ',',
+            190: '.',
+            191: '/'
+        }
+        return keyMap[keycode] || String.fromCharCode(keycode)
     }
 
     // 延迟函数
