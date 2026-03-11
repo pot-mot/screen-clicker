@@ -209,11 +209,8 @@ class InputRecorder {
     }
 
     // 获取录制状态
-    getRecordingState(): { isRecording: boolean; actionCount: number } {
-        return {
-            isRecording: this.recordingState.isRecording,
-            actionCount: this.recordingState.actions.length
-        }
+    getRecordingState(): RecordingState {
+        return this.recordingState
     }
 }
 

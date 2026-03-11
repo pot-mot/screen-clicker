@@ -20,8 +20,10 @@ const handleStartRecording = async (eventTypes: number[]): Promise<void> => {
         recordingDuration.value = 0
 
         // 启动进度更新
-        progressInterval = window.setInterval(() => {
+        progressInterval = window.setInterval(async () => {
             recordingDuration.value = Date.now() - (Date.now() - recordingDuration.value)
+            const recordingState = await window.api.getRecordingState()
+            actions.value = recordingState.actions
         }, 100)
     } catch (error) {
         console.error('启动录制失败:', error)
@@ -34,7 +36,7 @@ const handleStopRecording = async (): Promise<void> => {
     try {
         const result = await window.api.stopRecording()
         isRecording.value = false
-        actions.value = result.actions as unknown as Action[]
+        actions.value = result.actions
 
         if (progressInterval) {
             clearInterval(progressInterval)

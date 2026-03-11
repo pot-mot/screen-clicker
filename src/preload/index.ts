@@ -1,18 +1,31 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
-import type { UiohookKeyboardEvent, UiohookMouseEvent, UiohookWheelEvent } from 'uiohook-napi'
+import {
+    EventType,
+    type UiohookKeyboardEvent,
+    type UiohookMouseEvent,
+    type UiohookWheelEvent
+} from 'uiohook-napi'
 
 // 动作类型定义
-export type Action = (UiohookKeyboardEvent | UiohookMouseEvent | UiohookWheelEvent) & {
+type Action = (UiohookKeyboardEvent | UiohookMouseEvent | UiohookWheelEvent) & {
     timestamp: number // 相对于录制开始的时间戳
+}
+
+// 录制状态
+interface RecordingState {
+    isRecording: boolean
+    startTime: number
+    actions: Action[]
+    eventTypes: EventType[] // 要监听的事件类型
 }
 
 // Custom APIs for renderer
 const api = {
     // 录制控制
     startRecording: (eventTypes?: number[]) => ipcRenderer.invoke('start-recording', eventTypes),
-    stopRecording: () => ipcRenderer.invoke('stop-recording'),
-    getRecordingState: () => ipcRenderer.invoke('get-recording-state'),
+    stopRecording: (): Promise<Action[]> => ipcRenderer.invoke('stop-recording'),
+    getRecordingState: (): Promise<RecordingState> => ipcRenderer.invoke('get-recording-state'),
 
     // 重放控制
     replay: (actions: Action[], speedMultiplier?: number) =>

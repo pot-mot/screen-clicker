@@ -1,17 +1,17 @@
 import { ElectronAPI } from '@electron-toolkit/preload'
 
 declare global {
-    interface Action {
-        type: 'mousedown' | 'mouseup' | 'mousemove' | 'keydown' | 'keyup' | 'mousewheel'
-        button?: number
-        x?: number
-        y?: number
-        key?: string
-        keyCode?: number
-        modifiers?: string[]
-        wheelX?: number
-        wheelY?: number
-        timestamp: number
+    // 动作类型定义
+    type Action = (UiohookKeyboardEvent | UiohookMouseEvent | UiohookWheelEvent) & {
+      timestamp: number // 相对于录制开始的时间戳
+    }
+
+    // 录制状态
+    interface RecordingState {
+      isRecording: boolean
+      startTime: number
+      actions: Action[]
+      eventTypes: EventType[] // 要监听的事件类型
     }
 
     interface Window {
@@ -19,7 +19,7 @@ declare global {
         api: {
             startRecording: (eventTypes?: number[]) => Promise<{ success: boolean }>
             stopRecording: () => Promise<{ success: boolean; actions: Action[] }>
-            getRecordingState: () => Promise<{ isRecording: boolean; actionCount: number }>
+            getRecordingState: () => Promise<RecordingState>
             replay: (actions: Action[], speedMultiplier?: number) => Promise<{ success: boolean }>
             stopReplay: () => Promise<{ success: boolean }>
             onRecordingProgress: (
