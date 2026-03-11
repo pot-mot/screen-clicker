@@ -3,15 +3,15 @@ import { ElectronAPI } from '@electron-toolkit/preload'
 declare global {
     // 动作类型定义
     type Action = (UiohookKeyboardEvent | UiohookMouseEvent | UiohookWheelEvent) & {
-      timestamp: number // 相对于录制开始的时间戳
+        timestamp: number // 相对于录制开始的时间戳
     }
 
     // 录制状态
     interface RecordingState {
-      isRecording: boolean
-      startTime: number
-      actions: Action[]
-      eventTypes: EventType[] // 要监听的事件类型
+        isRecording: boolean
+        startTime: number
+        actions: Action[]
+        eventTypes: EventType[] // 要监听的事件类型
     }
 
     interface Window {

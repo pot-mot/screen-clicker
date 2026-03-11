@@ -1,10 +1,17 @@
 <script setup lang="ts">
 import { EventType } from '@renderer/components/EventType'
 import { Action } from '@renderer/components/Action'
+import { ref } from 'vue'
 
 defineProps<{
     actions: Action[]
 }>()
+
+const emit = defineEmits<{
+    (event: 'deleteActions', index: number[]): void
+}>()
+
+const selectedIndices = ref(new Set<number>())
 
 const getActionDescription = (action: Action): string => {
     switch (action.type) {
@@ -27,23 +34,93 @@ const formatTime = (ms: number): string => {
     const seconds = (ms / 1000).toFixed(2)
     return `${seconds}s`
 }
+
+const toggleSelection = (index: number, event: MouseEvent): void => {
+    if (event.ctrlKey || event.metaKey) {
+        // Ctrl/Cmd 键：切换选择状态
+        if (selectedIndices.value.has(index)) {
+            selectedIndices.value.delete(index)
+        } else {
+            selectedIndices.value.add(index)
+        }
+    } else if (event.shiftKey) {
+        // 清除文本选择
+        window.getSelection()?.removeAllRanges()
+        // Shift 键：范围选择
+        const lastSelected = Array.from(selectedIndices.value).pop()
+        if (lastSelected !== undefined) {
+            const start = Math.min(lastSelected, index)
+            const end = Math.max(lastSelected, index)
+            for (let i = start; i <= end; i++) {
+                selectedIndices.value.add(i)
+            }
+        } else {
+            selectedIndices.value.add(index)
+        }
+    } else {
+        // 无修饰键：单选
+        if (selectedIndices.value.has(index) && selectedIndices.value.size === 1) {
+            selectedIndices.value.delete(index)
+        } else {
+            selectedIndices.value.clear()
+            selectedIndices.value.add(index)
+        }
+    }
+}
+
+const deleteSelected = (): void => {
+    if (selectedIndices.value.size > 0) {
+        emit('deleteActions', Array.from(selectedIndices.value))
+        selectedIndices.value.clear()
+    }
+}
+
+// 键盘快捷键支持
+const handleKeyDown = (event: KeyboardEvent): void => {
+    if ((event.key === 'Delete' || event.key === 'Backspace') && selectedIndices.value.size > 0) {
+        event.preventDefault()
+        deleteSelected()
+    }
+}
 </script>
 
 <template>
-    <div class="action-list-container">
-        <h3 class="title">录制的动作 ({{ actions.length }})</h3>
+    <div class="action-list-container" tabindex="0" @keydown="handleKeyDown">
+        <div class="header">
+            <h3 class="title">录制的动作 ({{ actions.length }})</h3>
+            <button
+                v-if="selectedIndices.size > 0"
+                class="delete-selected-btn"
+                @click="deleteSelected"
+            >
+                删除已选择 ({{ selectedIndices.size }})
+            </button>
+        </div>
 
         <div v-if="actions.length === 0" class="empty-message">
             <p>暂无录制动作</p>
         </div>
 
         <div v-else class="action-list">
-            <div v-for="(action, index) in actions" :key="index" class="action-item">
+            <div
+                v-for="(action, index) in actions"
+                :key="index"
+                class="action-item"
+                :class="{ selected: selectedIndices.has(index) }"
+                @click="toggleSelection(index, $event)"
+            >
                 <div class="action-index">{{ index + 1 }}</div>
                 <div class="action-info">
                     <div class="action-desc">{{ getActionDescription(action) }}</div>
                     <div class="action-time">{{ formatTime(action.timestamp) }}</div>
                 </div>
+                <button
+                    class="delete-single-btn"
+                    title="删除此动作"
+                    @click.stop="emit('deleteActions', [index])"
+                >
+                    ×
+                </button>
             </div>
         </div>
     </div>
@@ -56,9 +133,31 @@ const formatTime = (ms: number): string => {
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
 .title {
-    margin: 0 0 15px 0;
+    margin: 0;
     font-size: 1.1em;
+}
+
+.delete-selected-btn {
+    padding: 6px 12px;
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9em;
+    transition: background 0.2s;
+}
+
+.delete-selected-btn:hover {
+    background: #c82333;
 }
 
 .empty-message {
@@ -81,6 +180,22 @@ const formatTime = (ms: number): string => {
     padding: 10px;
     background: #f8f9fa;
     border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    position: relative;
+}
+
+.action-item:hover {
+    background: #e9ecef;
+}
+
+.action-item.selected {
+    background: #667eea;
+    color: white;
+}
+
+.action-item.selected .action-time {
+    background: rgba(255, 255, 255, 0.2);
 }
 
 .action-index {
@@ -115,6 +230,32 @@ const formatTime = (ms: number): string => {
     background: rgba(0, 0, 0, 0.05);
     padding: 4px 8px;
     border-radius: 4px;
+}
+
+.delete-single-btn {
+    width: 24px;
+    height: 24px;
+    border: none;
+    background: transparent;
+    color: #999;
+    font-size: 18px;
+    cursor: pointer;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    margin-left: 8px;
+}
+
+.delete-single-btn:hover {
+    background: #dc3545;
+    color: white;
+}
+
+.action-item.selected .delete-single-btn:hover {
+    background: white;
+    color: #dc3545;
 }
 
 .action-list::-webkit-scrollbar {
