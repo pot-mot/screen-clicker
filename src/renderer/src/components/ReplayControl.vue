@@ -7,7 +7,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-    (event: 'play'): void
+    (event: 'play', speedMultiplier: number): void
     (event: 'stop'): void
 }>()
 
@@ -48,7 +48,11 @@ const canPlay = computed(() => {
         </div>
 
         <div class="button-group">
-            <button :disabled="!canPlay" class="btn btn-play" @click="emit('play')">
+            <button
+                :disabled="!canPlay"
+                class="btn btn-play"
+                @click="emit('play', speedMultiplier)"
+            >
                 开始重放
             </button>
             <button v-if="isReplaying" class="btn btn-stop" @click="emit('stop')">停止重放</button>

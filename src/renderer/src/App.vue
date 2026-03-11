@@ -52,12 +52,12 @@ const handleStopRecording = async (): Promise<void> => {
 }
 
 // 开始重放
-const handleReplay = async (): Promise<void> => {
+const handleReplay = async (speedMultiplier: number): Promise<void> => {
     if (actions.value.length === 0) return
 
     try {
         isReplaying.value = true
-        await window.api.replay(toRaw(actions.value), 1.0)
+        await window.api.replay(toRaw(actions.value), speedMultiplier)
     } catch (error) {
         console.error('重放失败:', error)
         isReplaying.value = false

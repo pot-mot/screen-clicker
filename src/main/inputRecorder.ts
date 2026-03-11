@@ -110,7 +110,7 @@ class InputRecorder {
             })
         })
 
-        console.log('开始录制')
+        console.log('Record starting')
     }
 
     // 停止录制
@@ -120,7 +120,7 @@ class InputRecorder {
         iohook.stop()
         this.recordingState.isRecording = false
 
-        console.log(`录制结束，共记录 ${this.recordingState.actions.length} 个动作`)
+        console.log(`Record finished`)
         return this.recordingState.actions
     }
 
@@ -142,7 +142,7 @@ class InputRecorder {
         if (this.isReplaying || actions.length === 0) return
 
         this.isReplaying = true
-        console.log(`开始重放，共 ${actions.length} 个动作，速度倍数：${speedMultiplier}`)
+        console.log(`Replay start\ncount: ${actions.length}\nspeedMultiplier: ${speedMultiplier}`)
 
         // 隐藏窗口避免干扰
         if (this.mainWindow) {
@@ -169,9 +169,9 @@ class InputRecorder {
                 }
             }
 
-            console.log('重放完成')
+            console.log('Replay is Finished')
         } catch (error) {
-            console.error('重放过程中出错:', error)
+            console.error('Replay Error:', error)
         } finally {
             this.isReplaying = false
 
@@ -191,11 +191,13 @@ class InputRecorder {
         this.replayTimeouts.forEach((timeout) => clearTimeout(timeout))
         this.replayTimeouts = []
 
-        console.log('重放已停止')
+        console.log('Replay is stopped')
     }
 
     // 执行单个动作
     private async executeAction(action: Action): Promise<void> {
+        console.log('Replay: ', action)
+
         switch (action.type) {
             case EventType.EVENT_KEY_PRESSED:
                 iohook.emit('keydown', action)
