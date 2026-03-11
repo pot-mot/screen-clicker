@@ -76,10 +76,7 @@ const handleStopReplay = async (): Promise<void> => {
 }
 
 const handleDeleteActions = (indices: number[]): void => {
-    // 从后往前删除，避免索引偏移问题
-    indices.forEach((index) => {
-        actions.value.splice(index, 1)
-    })
+    actions.value = actions.value.filter((_, index) => !indices.includes(index))
 }
 
 // 监听录制进度
