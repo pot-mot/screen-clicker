@@ -1,24 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import {
-    type UiohookKeyboardEvent,
-    type UiohookMouseEvent,
-    type UiohookWheelEvent
-} from 'uiohook-napi'
-
-enum EventType {
-    EVENT_KEY_PRESSED = 4,
-    EVENT_KEY_RELEASED = 5,
-    EVENT_MOUSE_CLICKED = 6,
-    EVENT_MOUSE_PRESSED = 7,
-    EVENT_MOUSE_RELEASED = 8,
-    EVENT_MOUSE_MOVED = 9,
-    EVENT_MOUSE_WHEEL = 11
-}
-
-export type Action = (UiohookKeyboardEvent | UiohookMouseEvent | UiohookWheelEvent) & {
-    timestamp: number // 相对于录制开始的时间戳
-}
+import { EventType } from '@renderer/components/EventType'
+import { Action } from '@renderer/components/Action'
 
 const props = defineProps<{
     actions: Action[]

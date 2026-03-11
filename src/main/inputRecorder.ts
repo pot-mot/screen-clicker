@@ -1,9 +1,9 @@
 import {
     EventType,
     uIOhook,
-    UiohookKeyboardEvent,
-    UiohookMouseEvent,
-    UiohookWheelEvent
+    type UiohookKeyboardEvent,
+    type UiohookMouseEvent,
+    type UiohookWheelEvent
 } from 'uiohook-napi'
 import { BrowserWindow, ipcMain } from 'electron'
 
@@ -17,6 +17,7 @@ interface RecordingState {
     isRecording: boolean
     startTime: number
     actions: Action[]
+    eventTypes: EventType[] // 要监听的事件类型
 }
 
 const iohook = uIOhook
@@ -26,7 +27,8 @@ class InputRecorder {
     private recordingState: RecordingState = {
         isRecording: false,
         startTime: 0,
-        actions: []
+        actions: [],
+        eventTypes: [EventType.EVENT_KEY_PRESSED] // 默认只监听键盘按下事件
     }
 
     private isReplaying: boolean = false
@@ -37,13 +39,14 @@ class InputRecorder {
     }
 
     // 启动录制
-    startRecording(): void {
+    startRecording(eventTypes?: EventType[]): void {
         if (this.recordingState.isRecording) return
 
         this.recordingState = {
             isRecording: true,
             startTime: Date.now(),
-            actions: []
+            actions: [],
+            eventTypes: eventTypes || [EventType.EVENT_KEY_PRESSED]
         }
 
         // 注册全局事件监听
@@ -51,6 +54,7 @@ class InputRecorder {
 
         iohook.on('mousedown', (event: UiohookMouseEvent) => {
             if (!this.recordingState.isRecording || this.isReplaying) return
+            if (!this.recordingState.eventTypes.includes(EventType.EVENT_MOUSE_PRESSED)) return
             this.addAction({
                 ...event,
                 timestamp: Date.now() - this.recordingState.startTime
@@ -59,6 +63,7 @@ class InputRecorder {
 
         iohook.on('mouseup', (event: UiohookMouseEvent) => {
             if (!this.recordingState.isRecording || this.isReplaying) return
+            if (!this.recordingState.eventTypes.includes(EventType.EVENT_MOUSE_RELEASED)) return
             this.addAction({
                 ...event,
                 timestamp: Date.now() - this.recordingState.startTime
@@ -67,6 +72,7 @@ class InputRecorder {
 
         iohook.on('mousemove', (event: UiohookMouseEvent) => {
             if (!this.recordingState.isRecording || this.isReplaying) return
+            if (!this.recordingState.eventTypes.includes(EventType.EVENT_MOUSE_MOVED)) return
             // 限制鼠标移动事件的频率
             const lastAction = this.recordingState.actions[this.recordingState.actions.length - 1]
             if (lastAction && lastAction.type === EventType.EVENT_MOUSE_MOVED) return
@@ -79,6 +85,7 @@ class InputRecorder {
 
         iohook.on('keydown', (event: UiohookKeyboardEvent) => {
             if (!this.recordingState.isRecording || this.isReplaying) return
+            if (!this.recordingState.eventTypes.includes(EventType.EVENT_KEY_PRESSED)) return
             this.addAction({
                 ...event,
                 timestamp: Date.now() - this.recordingState.startTime
@@ -87,6 +94,7 @@ class InputRecorder {
 
         iohook.on('keyup', (event: UiohookKeyboardEvent) => {
             if (!this.recordingState.isRecording || this.isReplaying) return
+            if (!this.recordingState.eventTypes.includes(EventType.EVENT_KEY_RELEASED)) return
             this.addAction({
                 ...event,
                 timestamp: Date.now() - this.recordingState.startTime
@@ -95,6 +103,7 @@ class InputRecorder {
 
         iohook.on('wheel', (event: UiohookWheelEvent) => {
             if (!this.recordingState.isRecording || this.isReplaying) return
+            if (!this.recordingState.eventTypes.includes(EventType.EVENT_MOUSE_WHEEL)) return
             this.addAction({
                 ...event,
                 timestamp: Date.now() - this.recordingState.startTime
@@ -215,8 +224,8 @@ export const inputRecorder = new InputRecorder()
 export function initInputRecorderIPC(mainWindow: BrowserWindow): void {
     inputRecorder.setMainWindow(mainWindow)
 
-    ipcMain.handle('start-recording', () => {
-        inputRecorder.startRecording()
+    ipcMain.handle('start-recording', (_, eventTypes?: EventType[]) => {
+        inputRecorder.startRecording(eventTypes)
         return { success: true }
     })
 

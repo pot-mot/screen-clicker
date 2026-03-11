@@ -3,19 +3,7 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import RecorderControl from './components/RecorderControl.vue'
 import ActionList from './components/ActionList.vue'
 import ReplayControl from './components/ReplayControl.vue'
-
-interface Action {
-    type: 'mousedown' | 'mouseup' | 'mousemove' | 'keydown' | 'keyup' | 'mousewheel'
-    button?: number
-    x?: number
-    y?: number
-    key?: string
-    keyCode?: number
-    modifiers?: string[]
-    wheelX?: number
-    wheelY?: number
-    timestamp: number
-}
+import { Action } from '@renderer/components/Action'
 
 const isRecording = ref(false)
 const actions = ref<Action[]>([])
@@ -24,9 +12,9 @@ const isReplaying = ref(false)
 let progressInterval: number | null = null
 
 // 开始录制
-const handleStartRecording = async (): Promise<void> => {
+const handleStartRecording = async (eventTypes: number[]): Promise<void> => {
     try {
-        await window.api.startRecording()
+        await window.api.startRecording(eventTypes)
         isRecording.value = true
         actions.value = []
         recordingDuration.value = 0
@@ -46,7 +34,7 @@ const handleStopRecording = async (): Promise<void> => {
     try {
         const result = await window.api.stopRecording()
         isRecording.value = false
-        actions.value = result.actions
+        actions.value = result.actions as unknown as Action[]
 
         if (progressInterval) {
             clearInterval(progressInterval)
@@ -68,7 +56,6 @@ const handleReplay = async (): Promise<void> => {
     try {
         isReplaying.value = true
         await window.api.replay(actions.value, 1.0)
-        isReplaying.value = false
     } catch (error) {
         console.error('重放失败:', error)
         isReplaying.value = false

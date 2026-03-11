@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
+import { EventType } from '@renderer/components/EventType'
 
 const props = defineProps<{
     isRecording: boolean
@@ -8,15 +9,32 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-    (event: 'start'): void
+    (event: 'start', eventTypes: EventType[]): void
     (event: 'stop'): void
 }>()
+
+// 事件类型选项
+const availableEventTypes = ref([
+    { type: EventType.EVENT_MOUSE_PRESSED, label: '鼠标按下', enabled: true },
+    { type: EventType.EVENT_MOUSE_RELEASED, label: '鼠标释放', enabled: false },
+    { type: EventType.EVENT_MOUSE_MOVED, label: '鼠标移动', enabled: false },
+    { type: EventType.EVENT_MOUSE_WHEEL, label: '鼠标滚轮', enabled: false },
+
+    { type: EventType.EVENT_KEY_PRESSED, label: '键盘按下', enabled: false },
+    { type: EventType.EVENT_KEY_RELEASED, label: '键盘释放', enabled: false }
+])
 
 const formatDuration = (ms: number): string => {
     const seconds = Math.floor(ms / 1000)
     const minutes = Math.floor(seconds / 60)
     const remainingSeconds = seconds % 60
     return `${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`
+}
+
+const getSelectedEventTypes = (): EventType[] => {
+    return availableEventTypes.value
+        .filter((item) => item.enabled)
+        .map((item) => item.type)
 }
 
 const statusText = computed(() => {
@@ -30,6 +48,16 @@ const statusText = computed(() => {
 const statusClass = computed(() => {
     return props.isRecording ? 'status-recording' : 'status-ready'
 })
+
+const handleStart = (): void => {
+    const selectedTypes = getSelectedEventTypes()
+    // 至少选择一个事件类型
+    if (selectedTypes.length === 0) {
+        alert('请至少选择一种事件类型')
+        return
+    }
+    emit('start', selectedTypes)
+}
 </script>
 
 <template>
@@ -51,10 +79,20 @@ const statusClass = computed(() => {
         </div>
 
         <div class="button-group">
-            <button v-if="!isRecording" class="btn btn-start" @click="emit('start')">
+            <button v-if="!isRecording" class="btn btn-start" @click="handleStart">
                 🎬 开始录制
             </button>
             <button v-else class="btn btn-stop" @click="emit('stop')">⏹️ 停止录制</button>
+        </div>
+
+        <div v-if="!isRecording" class="event-types">
+            <p class="section-title">📋 监听事件类型:</p>
+            <div class="checkbox-group">
+                <label v-for="item in availableEventTypes" :key="item.type" class="checkbox-item">
+                    <input v-model="item.enabled" type="checkbox" />
+                    <span>{{ item.label }}</span>
+                </label>
+            </div>
         </div>
 
         <div class="tips">
@@ -201,5 +239,42 @@ const statusClass = computed(() => {
 .tips li {
     margin: 4px 0;
     line-height: 1.4;
+}
+
+.event-types {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 12px;
+    margin-bottom: 15px;
+}
+
+.section-title {
+    margin: 0 0 10px 0;
+    font-weight: bold;
+    font-size: 0.95em;
+}
+
+.checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 0.9em;
+}
+
+.checkbox-item input[type='checkbox'] {
+    cursor: pointer;
+    width: 16px;
+    height: 16px;
+}
+
+.checkbox-item span {
+    user-select: none;
 }
 </style>

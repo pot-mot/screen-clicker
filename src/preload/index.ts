@@ -10,7 +10,7 @@ export type Action = (UiohookKeyboardEvent | UiohookMouseEvent | UiohookWheelEve
 // Custom APIs for renderer
 const api = {
     // 录制控制
-    startRecording: () => ipcRenderer.invoke('start-recording'),
+    startRecording: (eventTypes?: number[]) => ipcRenderer.invoke('start-recording', eventTypes),
     stopRecording: () => ipcRenderer.invoke('stop-recording'),
     getRecordingState: () => ipcRenderer.invoke('get-recording-state'),
 

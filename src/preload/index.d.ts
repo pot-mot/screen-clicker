@@ -17,7 +17,7 @@ declare global {
     interface Window {
         electron: ElectronAPI
         api: {
-            startRecording: () => Promise<{ success: boolean }>
+            startRecording: (eventTypes?: number[]) => Promise<{ success: boolean }>
             stopRecording: () => Promise<{ success: boolean; actions: Action[] }>
             getRecordingState: () => Promise<{ isRecording: boolean; actionCount: number }>
             replay: (actions: Action[], speedMultiplier?: number) => Promise<{ success: boolean }>
