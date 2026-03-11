@@ -196,8 +196,36 @@ class InputRecorder {
 
     // 执行单个动作
     private async executeAction(action: Action): Promise<void> {
-        console.log(action)
-        // TODO 实现执行
+        switch (action.type) {
+            case EventType.EVENT_KEY_PRESSED:
+                iohook.emit('keydown', action)
+                break
+            case EventType.EVENT_KEY_RELEASED:
+                iohook.emit('keyup', action)
+                break
+
+            case EventType.EVENT_MOUSE_PRESSED:
+                iohook.emit('mousedown', action)
+                break
+            case EventType.EVENT_MOUSE_RELEASED:
+                iohook.emit('mouseup', action)
+                break
+
+            case EventType.EVENT_MOUSE_CLICKED:
+                iohook.emit('click', action)
+                break
+
+            case EventType.EVENT_MOUSE_MOVED:
+                iohook.emit('mousemove', action)
+                break
+
+            case EventType.EVENT_MOUSE_WHEEL:
+                iohook.emit('wheel', action)
+                break
+
+            default:
+                console.warn(`未知事件 ${action}`)
+        }
     }
 
     // 延迟函数

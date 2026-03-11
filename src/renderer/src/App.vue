@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, toRaw } from 'vue'
 import RecorderControl from './components/RecorderControl.vue'
 import ActionList from './components/ActionList.vue'
 import ReplayControl from './components/ReplayControl.vue'
@@ -57,7 +57,7 @@ const handleReplay = async (): Promise<void> => {
 
     try {
         isReplaying.value = true
-        await window.api.replay(actions.value, 1.0)
+        await window.api.replay(toRaw(actions.value), 1.0)
     } catch (error) {
         console.error('重放失败:', error)
         isReplaying.value = false
