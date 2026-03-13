@@ -8,6 +8,8 @@ import {
     umountClickOutside
 } from '@renderer/components/list/selectableList/useClickOutside.ts'
 import { cloneDeepReadonlyRaw } from '@renderer/utils/type/cloneDeepReadonly.ts'
+import { json5Parse } from '@renderer/utils/json/jsonParse.ts'
+import { validateAction } from '@renderer/type/validateAction.ts'
 
 const type = ref<'record' | 'replay'>('record')
 
@@ -110,6 +112,75 @@ const stopReplay = async (): Promise<void> => {
     }
 }
 
+// 导出 JSON
+const exportActionsToJson = (): void => {
+    try {
+        const jsonString = JSON.stringify(actions.value, null, 2)
+        const blob = new Blob([jsonString], { type: 'application/json' })
+        const url = URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = url
+        link.download = `actions-${new Date().toISOString().replace(/[:.]/g, '-')}.json`
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        URL.revokeObjectURL(url)
+    } catch (e) {
+        console.error(e)
+        alert('Export Failed: ' + e)
+    }
+}
+
+// 导入 JSON
+const importActionsFromJson = (): void => {
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = '.json'
+    input.onchange = (event) => {
+        const target = event.target as HTMLInputElement
+        if (!target.files || target.files.length === 0) return
+        
+        const file = target.files[0]
+        const reader = new FileReader()
+        reader.onload = (e) => {
+            try {
+                const content = e.target?.result
+                if (typeof content !== 'string') {
+                    alert('Invalid format: content must be a string')
+                    return
+                }
+                const parsedData = json5Parse(content)
+                
+                // 验证数据格式
+                if (!Array.isArray(parsedData)) {
+                    alert('Invalid format: data must be an array')
+                    return
+                }
+                
+                // 验证每个 action
+                for (let i = 0; i < parsedData.length; i++) {
+                    const valid = validateAction(parsedData[i])
+                    if (!valid) {
+                        alert(`Invalid action at index ${i}`)
+                        return
+                    }
+                }
+                
+                actions.value = parsedData
+                alert(`Successfully imported ${parsedData.length} actions`)
+            } catch (error) {
+                console.error(error)
+                alert('Import Failed: ' + (error as Error).message)
+            }
+        }
+        reader.onerror = () => {
+            alert('Failed to read file')
+        }
+        reader.readAsText(file)
+    }
+    input.click()
+}
+
 watch(
     () => type.value,
     () => {
@@ -128,6 +199,8 @@ watch(
         <div class="operation-container">
             <button @click="type = 'record'">record</button>
             <button @click="type = 'replay'">replay</button>
+            <button @click="exportActionsToJson">export to json</button>
+            <button @click="importActionsFromJson">import from json</button>
         </div>
         <div v-if="type === 'record'" class="action-container">
             <div class="operation-container">
