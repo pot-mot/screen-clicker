@@ -133,9 +133,9 @@ const buttonToStr = (num: unknown): ButtonType | undefined => {
         case 1:
             return 'left'
         case 2:
-            return 'middle'
-        case 3:
             return 'right'
+        case 3:
+            return 'middle'
     }
     return undefined
 }
@@ -143,6 +143,12 @@ const buttonToStr = (num: unknown): ButtonType | undefined => {
 class ActionRecorder {
     private readonly mainWindow: BrowserWindow
     private isRecording: boolean = false
+
+    private startTime: number | null = null
+    private stopTime: number | null = null
+    private duration: number = 0
+    private accumulatedPauseTime: number = 0
+    private lastPauseStart: number | null = null
 
     constructor(window: BrowserWindow) {
         this.mainWindow = window
@@ -156,7 +162,7 @@ class ActionRecorder {
                         type: 'keydown',
                         event,
                         key,
-                        timestamp: Date.now()
+                        timestamp: this.getAdjustTimestamp()
                     })
                     break
                 }
@@ -167,7 +173,7 @@ class ActionRecorder {
                         type: 'keyup',
                         event,
                         key,
-                        timestamp: Date.now()
+                        timestamp: this.getAdjustTimestamp()
                     })
                     break
                 }
@@ -175,7 +181,7 @@ class ActionRecorder {
                     this.sendAction({
                         type: 'mousemove',
                         event,
-                        timestamp: Date.now()
+                        timestamp: this.getAdjustTimestamp()
                     })
                     break
                 }
@@ -186,7 +192,7 @@ class ActionRecorder {
                         type: 'mousedown',
                         event,
                         button,
-                        timestamp: Date.now()
+                        timestamp: this.getAdjustTimestamp()
                     })
                     break
                 }
@@ -197,7 +203,7 @@ class ActionRecorder {
                         type: 'mouseup',
                         event,
                         button,
-                        timestamp: Date.now()
+                        timestamp: this.getAdjustTimestamp()
                     })
                     break
                 }
@@ -205,7 +211,7 @@ class ActionRecorder {
                     this.sendAction({
                         type: 'wheel',
                         event,
-                        timestamp: Date.now()
+                        timestamp: this.getAdjustTimestamp()
                     })
                     break
                 }
@@ -213,14 +219,37 @@ class ActionRecorder {
         })
     }
 
+    private getAdjustTimestamp = (): number => {
+        if (!this.startTime) return Date.now()
+        return Date.now() - this.startTime - this.accumulatedPauseTime
+    }
+
     private sendAction(action: Action): void {
         this.mainWindow.webContents.send('action', { action })
     }
 
     // 启动录制
-    startRecording(): void {
+    startRecording(reset: boolean): void {
         if (this.isRecording) return
+
+        if (reset) {
+            this.startTime = null
+            this.stopTime = null
+            this.duration = 0
+            this.accumulatedPauseTime = 0
+            this.lastPauseStart = null
+        }
+
         this.isRecording = true
+
+        if (this.startTime === null) {
+            this.startTime = Date.now()
+        } else if (this.lastPauseStart !== null) {
+            const pauseDuration = Date.now() - this.lastPauseStart
+            this.accumulatedPauseTime += pauseDuration
+            this.lastPauseStart = null
+        }
+
         iohook.start()
     }
 
@@ -228,11 +257,21 @@ class ActionRecorder {
     stopRecording(): void {
         if (!this.isRecording) return
         this.isRecording = false
+        this.lastPauseStart = Date.now()
         iohook.stop()
+
+        if (this.startTime !== null) {
+            this.stopTime = Date.now()
+            this.duration = this.stopTime - this.startTime - this.accumulatedPauseTime
+        }
     }
 
     getIsRecording(): boolean {
         return this.isRecording
+    }
+
+    getDuration(): number {
+        return this.duration
     }
 }
 
@@ -240,8 +279,8 @@ class ActionRecorder {
 export const initActionRecorder = (mainWindow: BrowserWindow): void => {
     const inputRecorder = new ActionRecorder(mainWindow)
 
-    ipcMain.handle('startRecording', () => {
-        inputRecorder.startRecording()
+    ipcMain.handle('startRecording', (_, reset: boolean) => {
+        inputRecorder.startRecording(reset)
     })
 
     ipcMain.handle('stopRecording', () => {

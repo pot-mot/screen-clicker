@@ -5,8 +5,6 @@ import ActionViewList from '@renderer/components/action/ActionViewList.vue'
 import ActionEditList from '@renderer/components/action/ActionEditList.vue'
 
 const type = ref<'record' | 'replay'>('record')
-const recordStartTime = ref<number>(Date.now())
-const isRecording = ref(false)
 
 const actions = ref<Action[]>([])
 
@@ -17,6 +15,11 @@ const handleAction: ActionCallback = (_, data) => {
 }
 let actionListenerId: number | undefined
 
+// 记录
+const recordStartTime = ref<number>(Date.now())
+const isRecording = ref(false)
+let recordResetFlag = false
+
 const startRecord = async (): Promise<void> => {
     try {
         isRecording.value = true
@@ -25,7 +28,7 @@ const startRecord = async (): Promise<void> => {
         }
         actionListenerId = await window.api.onAction(handleAction)
         recordStartTime.value = Date.now()
-        await window.api.startRecording()
+        await window.api.startRecording(recordResetFlag)
     } catch (e) {
         console.error(e)
         alert('StartRecord Fail: ' + e)
@@ -48,6 +51,7 @@ const stopRecord = async (): Promise<void> => {
 const resetRecord = async (): Promise<void> => {
     try {
         isRecording.value = false
+        recordResetFlag = true
         if (actionListenerId !== undefined) {
             window.api.offAction(actionListenerId)
         }
@@ -59,6 +63,7 @@ const resetRecord = async (): Promise<void> => {
     }
 }
 
+// 重放
 const isReplaying = ref(false)
 
 const startReplay = async (): Promise<void> => {

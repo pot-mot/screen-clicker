@@ -50,7 +50,7 @@ declare global {
     interface Window {
         electron: ElectronAPI
         api: {
-            startRecording: () => Promise<void>
+            startRecording: (reset: boolean) => Promise<void>
             stopRecording: () => Promise<void>
             isRecording: () => Promise<boolean>
 

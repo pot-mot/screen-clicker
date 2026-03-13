@@ -40,7 +40,7 @@ const actionListenerManager = new ActionListenerManager()
 // Custom APIs for renderer
 const api = {
     // 录制控制
-    startRecording: () => ipcRenderer.invoke('startRecording'),
+    startRecording: (reset: boolean) => ipcRenderer.invoke('startRecording', reset),
     stopRecording: () => ipcRenderer.invoke('stopRecording'),
     isRecording: () => ipcRenderer.invoke('isRecording'),
 
