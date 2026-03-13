@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref, toRaw, watch } from 'vue'
 import { Action, ActionCallback } from '@renderer/type/Action'
 import ActionViewList from '@renderer/components/action/ActionViewList.vue'
 import ActionEditList from '@renderer/components/action/ActionEditList.vue'
@@ -8,26 +8,30 @@ const type = ref<'record' | 'replay'>('record')
 
 const actions = ref<Action[]>([])
 
-// 监听 action 事件
-const handleAction: ActionCallback = (_, data) => {
+// 监听 actionRecord 事件
+const handleActionRecord: ActionCallback = (_, data) => {
     if (data.action.type !== 'mousemove' && data.action.type !== 'wheel')
         actions.value.push(data.action)
 }
-let actionListenerId: number | undefined
+let actionRecordListenerId: number | undefined
+
+// 监听 actionExecute 事件
+const handleActionExecute: ActionCallback = (_, data) => {
+    console.log('Execute: ', data.action)
+}
+let actionExecuteListenerId: number | undefined
 
 // 记录
-const recordStartTime = ref<number>(Date.now())
 const isRecording = ref(false)
 let recordResetFlag = false
 
 const startRecord = async (): Promise<void> => {
     try {
         isRecording.value = true
-        if (actionListenerId !== undefined) {
-            window.api.offAction(actionListenerId)
+        if (actionRecordListenerId !== undefined) {
+            window.api.offActionRecord(actionRecordListenerId)
         }
-        actionListenerId = await window.api.onAction(handleAction)
-        recordStartTime.value = Date.now()
+        actionRecordListenerId = await window.api.onActionRecord(handleActionRecord)
         await window.api.startRecording(recordResetFlag)
     } catch (e) {
         console.error(e)
@@ -38,8 +42,8 @@ const startRecord = async (): Promise<void> => {
 const stopRecord = async (): Promise<void> => {
     try {
         isRecording.value = false
-        if (actionListenerId !== undefined) {
-            window.api.offAction(actionListenerId)
+        if (actionRecordListenerId !== undefined) {
+            window.api.offActionRecord(actionRecordListenerId)
         }
         await window.api.stopRecording()
     } catch (e) {
@@ -52,8 +56,8 @@ const resetRecord = async (): Promise<void> => {
     try {
         isRecording.value = false
         recordResetFlag = true
-        if (actionListenerId !== undefined) {
-            window.api.offAction(actionListenerId)
+        if (actionRecordListenerId !== undefined) {
+            window.api.offActionRecord(actionRecordListenerId)
         }
         await window.api.stopRecording()
         actions.value = []
@@ -69,7 +73,11 @@ const isReplaying = ref(false)
 const startReplay = async (): Promise<void> => {
     try {
         isReplaying.value = true
-        await window.api.startReplay(actions.value)
+        if (actionExecuteListenerId !== undefined) {
+            window.api.offActionExecute(actionExecuteListenerId)
+        }
+        actionExecuteListenerId = await window.api.onActionExecute(handleActionExecute)
+        await window.api.startReplay(toRaw(actions.value))
     } catch (e) {
         console.error(e)
         alert('StartReplay Fail: ' + e)
@@ -79,6 +87,9 @@ const startReplay = async (): Promise<void> => {
 const stopReplay = async (): Promise<void> => {
     try {
         isReplaying.value = false
+        if (actionRecordListenerId !== undefined) {
+            window.api.offActionRecord(actionRecordListenerId)
+        }
         await window.api.stopReplay()
     } catch (e) {
         console.error(e)

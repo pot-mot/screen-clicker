@@ -15,7 +15,6 @@ class ActionReplayer {
     async startReplay(actions: Action[], speedMultiplier: number = 1.0): Promise<void> {
         if (this.isReplaying || actions.length === 0) return
 
-        this.mainWindow.minimize()
         this.isReplaying = true
 
         try {
@@ -65,8 +64,6 @@ class ActionReplayer {
 
     // 执行单个动作
     private async executeAction(action: Action): Promise<void> {
-        console.log('Replay: ', action)
-
         switch (action.type) {
             case 'keydown': {
                 const modifier: string[] = []
@@ -108,9 +105,13 @@ class ActionReplayer {
                 break
             }
 
-            default:
+            default: {
                 console.warn(`未知事件 ${action}`)
+                break
+            }
         }
+
+        this.sendActionExecute(action)
     }
 
     // 延迟函数
@@ -119,6 +120,10 @@ class ActionReplayer {
             const timeout = setTimeout(resolve, ms)
             this.replayTimeouts.push(timeout)
         })
+    }
+
+    private sendActionExecute(action: Action): void {
+        this.mainWindow.webContents.send('actionExecute', { action })
     }
 
     getIsReplaying(): boolean {

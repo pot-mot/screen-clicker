@@ -58,8 +58,11 @@ declare global {
             stopReplay: () => Promise<void>
             isReplaying: () => Promise<boolean>
 
-            onAction: (callback: ActionCallback) => Promise<number>
-            offAction: (id: number) => Promise<void>
+            onActionRecord: (callback: ActionCallback) => Promise<number>
+            offActionRecord: (id: number) => Promise<void>
+
+            onActionExecute: (callback: ActionCallback) => Promise<number>
+            offActionExecute: (id: number) => Promise<void>
         }
     }
 }

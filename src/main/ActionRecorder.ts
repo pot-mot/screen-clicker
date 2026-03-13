@@ -158,7 +158,7 @@ class ActionRecorder {
                 case EventType.EVENT_KEY_PRESSED: {
                     const key = codeToKey(event.keycode)
                     if (!key) return
-                    this.sendAction({
+                    this.sendActionRecord({
                         type: 'keydown',
                         event,
                         key,
@@ -169,7 +169,7 @@ class ActionRecorder {
                 case EventType.EVENT_KEY_RELEASED: {
                     const key = codeToKey(event.keycode)
                     if (!key) return
-                    this.sendAction({
+                    this.sendActionRecord({
                         type: 'keyup',
                         event,
                         key,
@@ -178,7 +178,7 @@ class ActionRecorder {
                     break
                 }
                 case EventType.EVENT_MOUSE_MOVED: {
-                    this.sendAction({
+                    this.sendActionRecord({
                         type: 'mousemove',
                         event,
                         timestamp: this.getAdjustTimestamp()
@@ -188,7 +188,7 @@ class ActionRecorder {
                 case EventType.EVENT_MOUSE_PRESSED: {
                     const button = buttonToStr(event.button)
                     if (!button) return
-                    this.sendAction({
+                    this.sendActionRecord({
                         type: 'mousedown',
                         event,
                         button,
@@ -199,7 +199,7 @@ class ActionRecorder {
                 case EventType.EVENT_MOUSE_RELEASED: {
                     const button = buttonToStr(event.button)
                     if (!button) return
-                    this.sendAction({
+                    this.sendActionRecord({
                         type: 'mouseup',
                         event,
                         button,
@@ -208,7 +208,7 @@ class ActionRecorder {
                     break
                 }
                 case EventType.EVENT_MOUSE_WHEEL: {
-                    this.sendAction({
+                    this.sendActionRecord({
                         type: 'wheel',
                         event,
                         timestamp: this.getAdjustTimestamp()
@@ -224,8 +224,8 @@ class ActionRecorder {
         return Date.now() - this.startTime - this.accumulatedPauseTime
     }
 
-    private sendAction(action: Action): void {
-        this.mainWindow.webContents.send('action', { action })
+    private sendActionRecord(action: Action): void {
+        this.mainWindow.webContents.send('actionRecord', { action })
     }
 
     // 启动录制

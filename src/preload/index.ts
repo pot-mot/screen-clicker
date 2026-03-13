@@ -5,37 +5,47 @@ import IpcRendererEvent = Electron.IpcRendererEvent
 
 type ActionCallback = (event: IpcRendererEvent, action: { action: Action }) => void
 
-class ActionListenerManager {
-    private listeners: Map<number, ActionCallback> = new Map()
+class ListenerManager<Callback extends (
+    event: IpcRendererEvent, ...args: any[]
+) => void> {
+    private readonly channel: string
+    private listeners: Map<number, Callback> = new Map()
     private nextId: number = 0
 
-    addListener(callback: ActionCallback): number {
+    constructor(channel: string) {
+        this.channel = channel
+    }
+
+    addListener(callback: Callback): number {
         const id = this.nextId++
-        const wrappedCallback: ActionCallback = (event, data) => {
-            callback(event, data)
-        }
-        this.listeners.set(id, wrappedCallback)
-        ipcRenderer.on('action', wrappedCallback)
+        this.listeners.set(id, callback)
+        ipcRenderer.on(this.channel, callback)
         return id
     }
 
     removeListener(id: number): void {
         const callback = this.listeners.get(id)
         if (callback) {
-            ipcRenderer.off('action', callback)
+            ipcRenderer.off(this.channel, callback)
             this.listeners.delete(id)
         }
     }
 
     clear(): void {
         this.listeners.forEach((callback) => {
-            ipcRenderer.off('action', callback)
+            ipcRenderer.off(this.channel, callback)
         })
         this.listeners.clear()
     }
+
+    getListener(id: number): Callback | undefined {
+        return this.listeners.get(id)
+    }
 }
 
-const actionListenerManager = new ActionListenerManager()
+const actionRecordListenerManager = new ListenerManager<ActionCallback>('actionRecord')
+
+const actionExecuteListenerManager = new ListenerManager<ActionCallback>('actionExecute')
 
 // Custom APIs for renderer
 const api = {
@@ -50,12 +60,20 @@ const api = {
     stopReplay: () => ipcRenderer.invoke('stopReplay'),
     isReplaying: () => ipcRenderer.invoke('isReplaying'),
 
-    // 事件监听
-    onAction: (callback: ActionCallback): number => {
-        return actionListenerManager.addListener(callback)
+    // 行为记录监听
+    onActionRecord: (callback: ActionCallback): number => {
+        return actionRecordListenerManager.addListener(callback)
     },
-    offAction: (id: number): void => {
-        actionListenerManager.removeListener(id)
+    offActionRecord: (id: number): void => {
+        actionRecordListenerManager.removeListener(id)
+    },
+
+    // 行为执行监听
+    onActionExecute: (callback: ActionCallback): number => {
+        return actionExecuteListenerManager.addListener(callback)
+    },
+    offActionExecute: (id: number): void => {
+        actionExecuteListenerManager.removeListener(id)
     }
 }
 
