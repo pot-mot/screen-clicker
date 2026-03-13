@@ -5,6 +5,8 @@ import IpcRendererEvent = Electron.IpcRendererEvent
 
 type ActionCallback = (event: IpcRendererEvent, action: { action: Action }) => void
 
+type ActionWithIndexCallback = (event: IpcRendererEvent, action: { action: Action, index: number }) => void
+
 class ListenerManager<Callback extends (
     event: IpcRendererEvent, ...args: any[]
 ) => void> {
@@ -45,7 +47,7 @@ class ListenerManager<Callback extends (
 
 const actionRecordListenerManager = new ListenerManager<ActionCallback>('actionRecord')
 
-const actionExecuteListenerManager = new ListenerManager<ActionCallback>('actionExecute')
+const actionExecuteListenerManager = new ListenerManager<ActionWithIndexCallback>('actionExecute')
 
 const replayFinishedListenerManager = new ListenerManager<() => void>('replayFinished')
 
@@ -71,7 +73,7 @@ const api = {
     },
 
     // 行为执行监听
-    onActionExecute: (callback: ActionCallback): number => {
+    onActionExecute: (callback: ActionWithIndexCallback): number => {
         return actionExecuteListenerManager.addListener(callback)
     },
     offActionExecute: (id: number): void => {

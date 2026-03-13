@@ -47,6 +47,8 @@ declare global {
 
     type ActionCallback = (event: IpcRendererEvent, action: { action: Action }) => void
 
+    type ActionWithIndexCallback = (event: IpcRendererEvent, action: { action: Action, index: number }) => void
+
     interface Window {
         electron: ElectronAPI
         api: {
@@ -61,7 +63,7 @@ declare global {
             onActionRecord: (callback: ActionCallback) => Promise<number>
             offActionRecord: (id: number) => Promise<void>
 
-            onActionExecute: (callback: ActionCallback) => Promise<number>
+            onActionExecute: (callback: ActionWithIndexCallback) => Promise<number>
             offActionExecute: (id: number) => Promise<void>
 
             onReplayFinished: (callback: () => void) => Promise<number>

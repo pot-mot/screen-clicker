@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
-import { Action, ActionCallback } from '@renderer/type/Action'
+import { Action, ActionCallback, ActionWithIndexCallback } from '@renderer/type/Action'
 import ActionViewList from '@renderer/components/action/ActionViewList.vue'
 import ActionEditList from '@renderer/components/action/ActionEditList.vue'
 import {
@@ -20,29 +20,16 @@ onBeforeUnmount(() => {
     umountClickOutside()
 })
 
+// 记录
+const isRecording = ref(false)
+let recordResetFlag = false
+
 // 监听 actionRecord 事件
 const handleActionRecord: ActionCallback = (_, data) => {
     if (data.action.type !== 'mousemove' && data.action.type !== 'wheel')
         actions.value.push(data.action)
 }
 let actionRecordListenerId: number | undefined
-
-// 监听 actionExecute 事件
-const handleActionExecute: ActionCallback = (_, data) => {
-    console.log('Execute: ', data.action)
-}
-let actionExecuteListenerId: number | undefined
-
-// 监听 replayFinished 事件
-const handleReplayFinished = () => {
-    isReplaying.value = false
-    console.log('Replay Finished')
-}
-let replayFinishedListenerId: number | undefined
-
-// 记录
-const isRecording = ref(false)
-let recordResetFlag = false
 
 const startRecord = async (): Promise<void> => {
     try {
@@ -73,6 +60,21 @@ const stopRecord = async (): Promise<void> => {
 
 // 重放
 const isReplaying = ref(false)
+const currentReplayIndex = ref<number>()
+
+// 监听 actionExecute 事件
+const handleActionExecute: ActionWithIndexCallback = (_, data) => {
+    console.log('Execute: ', data.action)
+    currentReplayIndex.value = data.index
+}
+let actionExecuteListenerId: number | undefined
+
+// 监听 replayFinished 事件
+const handleReplayFinished = () => {
+    isReplaying.value = false
+    console.log('Replay Finished')
+}
+let replayFinishedListenerId: number | undefined
 
 const startReplay = async (): Promise<void> => {
     try {
@@ -143,7 +145,7 @@ watch(
                 <button v-else @click="stopReplay">stop replay</button>
             </div>
             <div class="action-list">
-                <ActionViewList v-if="isReplaying" :actions="actions" />
+                <ActionViewList v-if="isReplaying" :actions="actions" :currentIndex="currentReplayIndex" />
                 <ActionEditList v-else v-model="actions" />
             </div>
         </div>

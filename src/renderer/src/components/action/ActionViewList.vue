@@ -3,14 +3,15 @@ import { Action } from '@renderer/type/Action'
 import ViewList from '@renderer/components/list/selectableList/ViewList.vue'
 
 defineProps<{
-    actions: Action[]
+    actions: Action[],
+    currentIndex?: number | undefined,
 }>()
 </script>
 
 <template>
     <ViewList :lines="actions">
         <template #line="{ item, index }">
-            <div>
+            <div :class="{action: currentIndex === index}">
                 <span>{{ index + 1 }}</span>
                 {{ item }}
             </div>
@@ -18,4 +19,8 @@ defineProps<{
     </ViewList>
 </template>
 
-<style scoped></style>
+<style scoped>
+.action {
+    background-color: var(--primary-color-background);
+}
+</style>

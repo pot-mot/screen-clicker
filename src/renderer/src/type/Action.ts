@@ -45,3 +45,5 @@ export type Action =
       }
 
 export type ActionCallback = (event: IpcRendererEvent, action: { action: Action }) => void
+
+export type ActionWithIndexCallback = (event: IpcRendererEvent, action: { action: Action, index: number }) => void

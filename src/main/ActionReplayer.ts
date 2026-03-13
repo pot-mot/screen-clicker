@@ -21,18 +21,18 @@ class ActionReplayer {
             for (let i = 0; i < actions.length; i++) {
                 if (!this.isReplaying) break
 
-                const action = actions[i]
-                const nextAction = actions[i + 1]
+                const action: Action | undefined = actions[i]
+                if (action === undefined) continue
 
                 // 执行动作
-                await this.executeAction(action)
+                await this.executeAction(action, i)
+
+                const nextAction: Action | undefined = actions[i + 1]
+                if (nextAction === undefined) continue
 
                 // 计算延迟
-                const delay = nextAction
-                    ? (nextAction.timestamp - action.timestamp) / speedMultiplier
-                    : 0
-                if (delay > 0 && delay < 10000) {
-                    // 限制最大延迟为 10 秒
+                const delay: number = (nextAction.timestamp - action.timestamp) / speedMultiplier
+                if (delay > 0) {
                     await this.sleep(delay)
                 }
             }
@@ -42,12 +42,6 @@ class ActionReplayer {
             console.error('Replay Error:', error)
         } finally {
             this.isReplaying = false
-
-            // 恢复窗口
-            if (this.mainWindow) {
-                this.mainWindow.restore()
-                this.mainWindow.focus()
-            }
 
             this.mainWindow.webContents.send('replayFinished')
         }
@@ -65,7 +59,7 @@ class ActionReplayer {
     }
 
     // 执行单个动作
-    private async executeAction(action: Action): Promise<void> {
+    private async executeAction(action: Action, index: number): Promise<void> {
         switch (action.type) {
             case 'keydown': {
                 const modifier: string[] = []
@@ -113,7 +107,7 @@ class ActionReplayer {
             }
         }
 
-        this.sendActionExecute(action)
+        this.sendActionExecute(action, index)
     }
 
     // 延迟函数
@@ -124,8 +118,8 @@ class ActionReplayer {
         })
     }
 
-    private sendActionExecute(action: Action): void {
-        this.mainWindow.webContents.send('actionExecute', { action })
+    private sendActionExecute(action: Action, index: number): void {
+        this.mainWindow.webContents.send('actionExecute', { action, index })
     }
 
     getIsReplaying(): boolean {
