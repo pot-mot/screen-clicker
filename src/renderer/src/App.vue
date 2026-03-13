@@ -71,21 +71,6 @@ const stopRecord = async (): Promise<void> => {
     }
 }
 
-const resetRecord = async (): Promise<void> => {
-    try {
-        isRecording.value = false
-        recordResetFlag = true
-        if (actionRecordListenerId !== undefined) {
-            window.api.offActionRecord(actionRecordListenerId)
-        }
-        await window.api.stopRecording()
-        actions.value = []
-    } catch (e) {
-        console.error(e)
-        alert('ResetRecord Fail: ' + e)
-    }
-}
-
 // 重放
 const isReplaying = ref(false)
 
@@ -137,24 +122,63 @@ watch(
 </script>
 
 <template>
-    <div>
-        <div>
+    <div class="main-container">
+        <div class="operation-container">
             <button @click="type = 'record'">record</button>
             <button @click="type = 'replay'">replay</button>
         </div>
-        <div v-if="type === 'record'">
-            <button v-if="!isRecording" @click="startRecord">start</button>
-            <button v-else @click="stopRecord">stop</button>
-            <button @click="resetRecord">reset</button>
-            <ActionViewList v-if="isRecording" :actions="actions" />
-            <ActionEditList v-else v-model="actions" />
+        <div v-if="type === 'record'" class="action-container">
+            <div class="operation-container">
+                <button v-if="!isRecording" @click="startRecord">start record</button>
+                <button v-else @click="stopRecord">stop record</button>
+            </div>
+            <div class="action-list">
+                <ActionViewList v-if="isRecording" :actions="actions" />
+                <ActionEditList v-else v-model="actions" />
+            </div>
         </div>
-        <div v-else-if="type === 'replay'">
-            <button v-if="!isReplaying" @click="startReplay">start</button>
-            <button v-else @click="stopReplay">stop</button>
-            <ActionEditList v-model="actions" />
+        <div v-else-if="type === 'replay'" class="action-container">
+            <div class="operation-container">
+                <button v-if="!isReplaying" @click="startReplay">start replay</button>
+                <button v-else @click="stopReplay">stop replay</button>
+            </div>
+            <div class="action-list">
+                <ActionViewList v-if="isReplaying" :actions="actions" />
+                <ActionEditList v-else v-model="actions" />
+            </div>
         </div>
     </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+.main-container {
+    width: 100%;
+    height: 100%;
+    display: grid;
+    grid-template-rows: auto 1fr;
+    grid-row-gap: 0.5rem;
+    padding: 0.5rem;
+    overflow: hidden;
+}
+
+.action-container {
+    display: grid;
+    grid-template-rows: auto 1fr;
+    grid-row-gap: 0.5rem;
+    overflow: hidden;
+}
+
+.operation-container {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 0.5rem;
+}
+
+.operation-container > button {
+    flex-shrink: 0;
+}
+
+.action-list {
+    overflow-y: auto;
+}
+</style>
