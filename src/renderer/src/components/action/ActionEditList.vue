@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Action } from '@renderer/type/Action'
 import EditList from '@renderer/components/list/selectableList/EditList.vue'
+import { validateAction } from '@renderer/type/validateAction.ts'
 
 const actions = defineModel<Action[]>({
     required: true
@@ -31,6 +32,7 @@ const createDefaultAction = (): Action => {
     <EditList
         :default-line="createDefaultAction"
         v-model:lines="actions"
+        :jsonSchemaValidate="validateAction"
     >
         <template #line="{ item, index }">
             <div>
