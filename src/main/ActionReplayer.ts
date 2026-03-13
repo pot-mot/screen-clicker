@@ -1,6 +1,7 @@
 import { BrowserWindow, ipcMain } from 'electron'
 import robot from '@hurdlegroup/robotjs'
 import { Action } from './Action'
+import { WheelDirection } from 'uiohook-napi'
 
 class ActionReplayer {
     private readonly mainWindow: BrowserWindow
@@ -79,12 +80,12 @@ class ActionReplayer {
             }
             case 'mousedown': {
                 robot.moveMouse(action.event.x, action.event.y)
-                robot.mouseClick(action.button, false)
+                robot.mouseToggle('down', action.button)
                 break
             }
             case 'mouseup': {
                 robot.moveMouse(action.event.x, action.event.y)
-                robot.mouseClick(action.button, true)
+                robot.mouseToggle('up', action.button)
                 break
             }
             case 'mousemove': {
@@ -92,8 +93,11 @@ class ActionReplayer {
                 break
             }
             case 'wheel': {
-                // TODO
-                robot.scrollMouse(action.event.x, action.event.y)
+                if (action.event.direction === WheelDirection.VERTICAL) {
+                    robot.scrollMouse(0, action.event.amount * -36 * action.event.rotation)
+                } else if (action.event.direction === WheelDirection.HORIZONTAL) {
+                    robot.scrollMouse(action.event.amount * -36 * action.event.rotation, 0)
+                }
                 break
             }
             case 'sleep': {

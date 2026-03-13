@@ -26,8 +26,7 @@ let recordResetFlag = false
 
 // 监听 actionRecord 事件
 const handleActionRecord: ActionCallback = (_, data) => {
-    if (data.action.type !== 'mousemove' && data.action.type !== 'wheel')
-        actions.value.push(data.action)
+    actions.value.push(data.action)
 }
 let actionRecordListenerId: number | undefined
 
@@ -52,6 +51,7 @@ const stopRecord = async (): Promise<void> => {
             window.api.offActionRecord(actionRecordListenerId)
         }
         await window.api.stopRecording()
+        actions.value.splice(actions.value.length - 1, 1)
     } catch (e) {
         console.error(e)
         alert('StopRecord Fail: ' + e)
