@@ -34,6 +34,12 @@ export type Action =
           timestamp: number
       }
     | {
+          type: 'unicodeTab'
+          event: UiohookKeyboardEvent
+          value: string
+          timestamp: number
+      }
+    | {
           type: 'wheel'
           event: UiohookWheelEvent
           timestamp: number
@@ -46,4 +52,7 @@ export type Action =
 
 export type ActionCallback = (event: IpcRendererEvent, action: { action: Action }) => void
 
-export type ActionWithIndexCallback = (event: IpcRendererEvent, action: { action: Action, index: number }) => void
+export type ActionWithIndexCallback = (
+    event: IpcRendererEvent,
+    action: { action: Action; index: number }
+) => void

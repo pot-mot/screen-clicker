@@ -21,6 +21,6 @@ defineProps<{
 
 <style scoped>
 .action {
-    background-color: var(--primary-color-background);
+    background-color: var(--primary-color-opacity-background);
 }
 </style>

@@ -78,6 +78,10 @@ class ActionReplayer {
                 robot.keyToggle(action.key, 'up', modifier)
                 break
             }
+            case 'unicodeTab': {
+                robot.typeString(action.value)
+                break
+            }
             case 'mousedown': {
                 robot.moveMouse(action.event.x, action.event.y)
                 robot.mouseToggle('down', action.button)

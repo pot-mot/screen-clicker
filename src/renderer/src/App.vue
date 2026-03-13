@@ -26,7 +26,7 @@ let recordResetFlag = false
 
 // 监听 actionRecord 事件
 const handleActionRecord: ActionCallback = (_, data) => {
-    actions.value.push(data.action)
+    if (data.action.type !== 'mousemove') actions.value.push(data.action)
 }
 let actionRecordListenerId: number | undefined
 
@@ -145,8 +145,7 @@ watch(
                 <button v-else @click="stopReplay">stop replay</button>
             </div>
             <div class="action-list">
-                <ActionViewList v-if="isReplaying" :actions="actions" :currentIndex="currentReplayIndex" />
-                <ActionEditList v-else v-model="actions" />
+                <ActionViewList :actions="actions" :currentIndex="currentReplayIndex" />
             </div>
         </div>
     </div>

@@ -1,4 +1,4 @@
-import { EventType, uIOhook } from 'uiohook-napi'
+import { EventType, uIOhook, UiohookKeyboardEvent } from 'uiohook-napi'
 import { BrowserWindow, ipcMain } from 'electron'
 import { Action, ButtonType } from './Action'
 import { Keys } from '@hurdlegroup/robotjs'
@@ -129,6 +129,32 @@ const buttonToStr = (num: unknown): ButtonType | undefined => {
     return undefined
 }
 
+const unmatchKeyCodeToTabStr = (event: UiohookKeyboardEvent): string | undefined => {
+    const { keycode, shiftKey } = event
+    
+    // 标点符号映射
+    const charMap: Record<number, { base: string; shift: string }> = {
+        51: { base: ',', shift: '<' },      // Comma
+        52: { base: '.', shift: '>' },      // Period
+        53: { base: '/', shift: '?' },      // Slash
+        39: { base: ';', shift: ':' },      // Semicolon
+        40: { base: "'", shift: '"' },      // Quote
+        26: { base: '[', shift: '{' },      // BracketLeft
+        27: { base: ']', shift: '}' },      // BracketRight
+        43: { base: '\\', shift: '|' },     // Backslash
+        12: { base: '-', shift: '_' },      // Minus
+        13: { base: '=', shift: '+' },      // Equal
+        41: { base: '`', shift: '~' }       // Backquote
+    }
+    
+    const charInfo = charMap[keycode]
+    if (charInfo) {
+        return shiftKey ? charInfo.shift : charInfo.base
+    }
+    
+    return undefined
+}
+
 class ActionRecorder {
     private readonly mainWindow: BrowserWindow
     private isRecording: boolean = false
@@ -146,23 +172,33 @@ class ActionRecorder {
             switch (event.type) {
                 case EventType.EVENT_KEY_PRESSED: {
                     const key = codeToKey(event.keycode)
-                    if (!key) {
-                        console.warn(`no key match for keycode: ${event.keycode}`)
-                        return
+                    if (key !== undefined) {
+                        this.sendActionRecord({
+                            type: 'keydown',
+                            event,
+                            key,
+                            timestamp: this.getAdjustTimestamp()
+                        })
+                        break
                     }
-                    this.sendActionRecord({
-                        type: 'keydown',
-                        event,
-                        key,
-                        timestamp: this.getAdjustTimestamp()
-                    })
+                    const tabStr = unmatchKeyCodeToTabStr(event)
+                    if (tabStr !== undefined) {
+                        this.sendActionRecord({
+                            type: 'unicodeTab',
+                            event,
+                            value: tabStr,
+                            timestamp: this.getAdjustTimestamp()
+                        })
+                        break
+                    }
+                    console.warn(`no key match for keycode: ${event.keycode}`)
                     break
                 }
                 case EventType.EVENT_KEY_RELEASED: {
                     const key = codeToKey(event.keycode)
                     if (!key) {
                         console.warn(`no key match for keycode: ${event.keycode}`)
-                        return
+                        break
                     }
                     this.sendActionRecord({
                         type: 'keyup',

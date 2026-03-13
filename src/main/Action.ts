@@ -33,6 +33,12 @@ export type Action =
           timestamp: number
       }
     | {
+          type: 'unicodeTab',
+          event: UiohookKeyboardEvent,
+          value: string
+          timestamp: number
+      }
+    | {
           type: 'wheel'
           event: UiohookWheelEvent
           timestamp: number
