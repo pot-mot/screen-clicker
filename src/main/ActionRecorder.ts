@@ -97,17 +97,6 @@ const codeKeyEntries = Object.entries({
     f22: 105,
     f23: 106,
     f24: 107,
-    semicolon: 39,
-    equal: 13,
-    comma: 51,
-    minus: 12,
-    period: 52,
-    slash: 53,
-    backquote: 41,
-    bracketleft: 26,
-    backslash: 43,
-    bracketright: 27,
-    quote: 40,
     control: 29,
     right_control: 3613,
     alt: 56,
@@ -157,7 +146,10 @@ class ActionRecorder {
             switch (event.type) {
                 case EventType.EVENT_KEY_PRESSED: {
                     const key = codeToKey(event.keycode)
-                    if (!key) return
+                    if (!key) {
+                        console.warn(`no key match for keycode: ${event.keycode}`)
+                        return
+                    }
                     this.sendActionRecord({
                         type: 'keydown',
                         event,
@@ -168,7 +160,10 @@ class ActionRecorder {
                 }
                 case EventType.EVENT_KEY_RELEASED: {
                     const key = codeToKey(event.keycode)
-                    if (!key) return
+                    if (!key) {
+                        console.warn(`no key match for keycode: ${event.keycode}`)
+                        return
+                    }
                     this.sendActionRecord({
                         type: 'keyup',
                         event,
