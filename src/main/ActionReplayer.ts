@@ -97,6 +97,7 @@ class ActionReplayer {
                 break
             }
             case 'wheel': {
+                robot.moveMouse(action.event.x, action.event.y)
                 if (action.event.direction === WheelDirection.VERTICAL) {
                     robot.scrollMouse(0, action.event.amount * -36 * action.event.rotation)
                 } else if (action.event.direction === WheelDirection.HORIZONTAL) {
