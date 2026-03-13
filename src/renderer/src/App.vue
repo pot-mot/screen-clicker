@@ -120,7 +120,8 @@ watch(
             <button v-if="!isRecording" @click="startRecord">start</button>
             <button v-else @click="stopRecord">stop</button>
             <button @click="resetRecord">reset</button>
-            <ActionViewList :actions="actions" />
+            <ActionViewList v-if="isRecording" :actions="actions" />
+            <ActionEditList v-else v-model="actions" />
         </div>
         <div v-else-if="type === 'replay'">
             <button v-if="!isReplaying" @click="startReplay">start</button>
