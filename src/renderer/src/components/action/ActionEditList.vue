@@ -11,7 +11,7 @@ const createDefaultAction = (): Action => {
         type: 'mousedown',
         event: {
             type: 7,
-            time: Date.now(),
+            time: 0,
             altKey: false,
             ctrlKey: false,
             metaKey: false,
@@ -22,7 +22,7 @@ const createDefaultAction = (): Action => {
             clicks: 0,
         },
         button: 'left',
-        timestamp: Date.now()
+        timestamp: 0
     }
 }
 </script>

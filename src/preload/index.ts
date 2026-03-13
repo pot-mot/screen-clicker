@@ -47,6 +47,8 @@ const actionRecordListenerManager = new ListenerManager<ActionCallback>('actionR
 
 const actionExecuteListenerManager = new ListenerManager<ActionCallback>('actionExecute')
 
+const replayFinishedListenerManager = new ListenerManager<() => void>('replayFinished')
+
 // Custom APIs for renderer
 const api = {
     // 录制控制
@@ -74,6 +76,14 @@ const api = {
     },
     offActionExecute: (id: number): void => {
         actionExecuteListenerManager.removeListener(id)
+    },
+
+    // 重放结束监听
+    onReplayFinished: (callback: () => void): number => {
+        return replayFinishedListenerManager.addListener(callback)
+    },
+    offReplayFinished: (id: number): void => {
+        replayFinishedListenerManager.removeListener(id)
     }
 }
 

@@ -1,12 +1,24 @@
 <script setup lang="ts">
-import { ref, toRaw, watch } from 'vue'
+import { onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { Action, ActionCallback } from '@renderer/type/Action'
 import ActionViewList from '@renderer/components/action/ActionViewList.vue'
 import ActionEditList from '@renderer/components/action/ActionEditList.vue'
+import {
+    mountClickOutside,
+    umountClickOutside
+} from '@renderer/components/list/selectableList/useClickOutside.ts'
+import { cloneDeepReadonlyRaw } from '@renderer/utils/type/cloneDeepReadonly.ts'
 
 const type = ref<'record' | 'replay'>('record')
 
 const actions = ref<Action[]>([])
+
+onMounted(() => {
+    mountClickOutside()
+})
+onBeforeUnmount(() => {
+    umountClickOutside()
+})
 
 // 监听 actionRecord 事件
 const handleActionRecord: ActionCallback = (_, data) => {
@@ -20,6 +32,13 @@ const handleActionExecute: ActionCallback = (_, data) => {
     console.log('Execute: ', data.action)
 }
 let actionExecuteListenerId: number | undefined
+
+// 监听 replayFinished 事件
+const handleReplayFinished = () => {
+    isReplaying.value = false
+    console.log('Replay Finished')
+}
+let replayFinishedListenerId: number | undefined
 
 // 记录
 const isRecording = ref(false)
@@ -76,8 +95,12 @@ const startReplay = async (): Promise<void> => {
         if (actionExecuteListenerId !== undefined) {
             window.api.offActionExecute(actionExecuteListenerId)
         }
+        if (replayFinishedListenerId !== undefined) {
+            window.api.offReplayFinished(replayFinishedListenerId)
+        }
         actionExecuteListenerId = await window.api.onActionExecute(handleActionExecute)
-        await window.api.startReplay(toRaw(actions.value))
+        replayFinishedListenerId = await window.api.onReplayFinished(handleReplayFinished)
+        await window.api.startReplay(cloneDeepReadonlyRaw(actions.value))
     } catch (e) {
         console.error(e)
         alert('StartReplay Fail: ' + e)
@@ -89,6 +112,9 @@ const stopReplay = async (): Promise<void> => {
         isReplaying.value = false
         if (actionRecordListenerId !== undefined) {
             window.api.offActionRecord(actionRecordListenerId)
+        }
+        if (replayFinishedListenerId !== undefined) {
+            window.api.offReplayFinished(replayFinishedListenerId)
         }
         await window.api.stopReplay()
     } catch (e) {

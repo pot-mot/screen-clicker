@@ -63,6 +63,9 @@ declare global {
 
             onActionExecute: (callback: ActionCallback) => Promise<number>
             offActionExecute: (id: number) => Promise<void>
+
+            onReplayFinished: (callback: () => void) => Promise<number>
+            offReplayFinished: (id: number) => Promise<void>
         }
     }
 }

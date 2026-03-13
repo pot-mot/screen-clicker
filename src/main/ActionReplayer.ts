@@ -48,6 +48,8 @@ class ActionReplayer {
                 this.mainWindow.restore()
                 this.mainWindow.focus()
             }
+
+            this.mainWindow.webContents.send('replayFinished')
         }
     }
 
