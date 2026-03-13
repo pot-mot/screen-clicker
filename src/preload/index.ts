@@ -1,43 +1,61 @@
 import { contextBridge, ipcRenderer } from 'electron'
 import { electronAPI } from '@electron-toolkit/preload'
-import {
-    EventType,
-    type UiohookKeyboardEvent,
-    type UiohookMouseEvent,
-    type UiohookWheelEvent
-} from 'uiohook-napi'
+import { Action } from '../main/Action'
+import IpcRendererEvent = Electron.IpcRendererEvent
 
-// 动作类型定义
-type Action = (UiohookKeyboardEvent | UiohookMouseEvent | UiohookWheelEvent) & {
-    timestamp: number // 相对于录制开始的时间戳
+type ActionCallback = (event: IpcRendererEvent, action: { action: Action }) => void
+
+class ActionListenerManager {
+    private listeners: Map<number, ActionCallback> = new Map()
+    private nextId: number = 0
+
+    addListener(callback: ActionCallback): number {
+        const id = this.nextId++
+        const wrappedCallback: ActionCallback = (event, data) => {
+            callback(event, data)
+        }
+        this.listeners.set(id, wrappedCallback)
+        ipcRenderer.on('action', wrappedCallback)
+        return id
+    }
+
+    removeListener(id: number): void {
+        const callback = this.listeners.get(id)
+        if (callback) {
+            ipcRenderer.off('action', callback)
+            this.listeners.delete(id)
+        }
+    }
+
+    clear(): void {
+        this.listeners.forEach((callback) => {
+            ipcRenderer.off('action', callback)
+        })
+        this.listeners.clear()
+    }
 }
 
-// 录制状态
-interface RecordingState {
-    isRecording: boolean
-    startTime: number
-    actions: Action[]
-    eventTypes: EventType[] // 要监听的事件类型
-}
+const actionListenerManager = new ActionListenerManager()
 
 // Custom APIs for renderer
 const api = {
     // 录制控制
-    startRecording: (eventTypes?: number[]) => ipcRenderer.invoke('start-recording', eventTypes),
-    stopRecording: (): Promise<Action[]> => ipcRenderer.invoke('stop-recording'),
-    getRecordingState: (): Promise<RecordingState> => ipcRenderer.invoke('get-recording-state'),
+    startRecording: () => ipcRenderer.invoke('startRecording'),
+    stopRecording: () => ipcRenderer.invoke('stopRecording'),
+    isRecording: () => ipcRenderer.invoke('isRecording'),
 
     // 重放控制
-    replay: (actions: Action[], speedMultiplier?: number) =>
-        ipcRenderer.invoke('replay', actions, speedMultiplier),
-    stopReplay: () => ipcRenderer.invoke('stop-replay'),
+    startReplay: (actions: Action[], speedMultiplier?: number) =>
+        ipcRenderer.invoke('startReplay', actions, speedMultiplier),
+    stopReplay: () => ipcRenderer.invoke('stopReplay'),
+    isReplaying: () => ipcRenderer.invoke('isReplaying'),
 
     // 事件监听
-    onRecordingProgress: (callback: (data: { count: number; duration: number }) => void) => {
-        ipcRenderer.on('recording-progress', (_, data) => callback(data))
+    onAction: (callback: ActionCallback): number => {
+        return actionListenerManager.addListener(callback)
     },
-    removeRecordingProgressListener: () => {
-        ipcRenderer.removeAllListeners('recording-progress')
+    offAction: (id: number): void => {
+        actionListenerManager.removeListener(id)
     }
 }
 
